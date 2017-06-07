@@ -30,26 +30,28 @@ class Policy(Resource):
     properties = dict(
         name=None,
         partition=None,
-        controls=None,
-        strategy=None,
-        legacy=True,
-        requires=None,
-        rules=None
+        strategy="/Common/first-match",
+        rules=list()
     )
 
-    def __init__(self, data):
+    def __init__(self, name, partition, **data):
         """Create the policy and nested class objects"""
         if isinstance(data, f5.bigip.tm.ltm.policy.Policy):
             data = self._flatten_policy(data)
-        super(Policy, self).__init__(data['name'], data['partition'])
+        super(Policy, self).__init__(name, partition)
         for key, value in self.properties.items():
             if key == 'rules':
+                rules = data.get('rules', value)
                 self._data[key] = self._create_rules(
-                    data['partition'], data[key])
+                    partition, rules)
                 continue
             if key == 'name' or key == 'partition':
                 continue
             self._data[key] = data.get(key, value)
+
+        self._data['legacy'] = True
+        self._data['controls'] = ["forwarding"]
+        self._data['requires'] = ["http"]
 
     def __eq__(self, other):
         """Check the equality of the two objects.
@@ -83,7 +85,7 @@ class Policy(Resource):
         return new_rules
 
     def _uri_path(self, bigip):
-        return bigip.tm.ltm.policy
+        return bigip.tm.ltm.policys.policy
 
     def _flatten_policy(self, bigip_policy):
         policy = {}

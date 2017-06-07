@@ -183,18 +183,16 @@
         name: 
           type: "string"
           description: "Name of the policy object"
-        description: 
-          type: "string"
         strategy: 
           type: "string"
           description: |
             "Specifies the method to determine which actions get executed in the
             case where there are multiple rules that match. The default is first."
           enum:
-            - "first"
-            - "best"
-            - "all"
-          default: "first"
+            - "/Common/first-match"
+            - "/Common/best-match"
+            - "/Common/all-match"
+          default: "/Common/first-match"
         rules: 
           type: "array"
           description: |
