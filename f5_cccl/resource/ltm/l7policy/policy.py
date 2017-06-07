@@ -63,16 +63,12 @@ class Policy(Resource):
         for key in self.properties:
             if key == 'rules':
                 if len(self._data[key]) != len(other.data[key]):
-                    # logger.debug('Rule length is unequal')
                     return False
                 for index, rule in enumerate(self._data[key]):
                     if rule != other.data[key][index]:
                         return False
                 continue
             if self._data[key] != other.data.get(key, None):
-                logger.debug(
-                    'Policies are unequal, %s does not match: %s - %s',
-                    key, self._data[key], other.data.get(key, None))
                 return False
         return True
 
