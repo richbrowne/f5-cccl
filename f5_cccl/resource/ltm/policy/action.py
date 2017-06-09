@@ -30,8 +30,8 @@ class Action(Resource):
         request=None
     )
 
-    def __init__(self, partition, data):
-        super(Action, self).__init__(data['name'], partition)
+    def __init__(self, name, partition, data):
+        super(Action, self).__init__(name, None)
         for key in self.properties:
             self._data[key] = data.get(key)
 

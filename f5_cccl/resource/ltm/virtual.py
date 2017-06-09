@@ -45,14 +45,19 @@ class VirtualServer(Resource):
         super(VirtualServer, self).__init__(name, partition)
 
         for key, value in self.properties.items():
-            if key == "name" or key == "partition":
-                continue
             if key == "profilesReference":
                 profiles = properties.get('profilesReference', value)
                 items = profiles.get('items', list())
                 self._data['profilesReference'] = self._create_profiles(items)
-                continue
-            self._data[key] = properties.get(key, value)
+            elif key in ['name', 'partition']:
+                pass
+            else:
+                self._data[key] = properties.get(key, value)
+
+        if self._data.get('vlansEnabled'):
+            self._data.pop('vlansDisabled', None)
+        elif self._data.get('vlansDisabled'):
+            self._data.pop('vlansEnabled', None)
 
         if self._data['vlans']:
             self._data['vlans'].sort()
@@ -64,7 +69,10 @@ class VirtualServer(Resource):
                 "of type {}".format(type(other)))
 
         for key in self.properties:
-            if self._data[key] != other.data.get(key, None):
+            if self._data.get(key, None) != other.data.get(key, None):
+                print("Key %s not equal" % key)
+                print("%s != %s" % (self._data.get(key, None),
+                                    other.data.get(key, None)))
                 return False
 
         return True
@@ -96,4 +104,9 @@ class ApiVirtualServer(VirtualServer):
 
 class IcrVirtualServer(VirtualServer):
     """Parse the iControl REST input to create the canonical Virtual Server."""
-    pass
+    def __init__(self, name, partition, **properties):
+        snat_translation = properties.get('sourceAddressTranslation', dict())
+        snat_translation.pop('poolReference', None)
+        super(IcrVirtualServer, self).__init__(name, partition, **properties)
+
+

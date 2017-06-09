@@ -17,8 +17,8 @@
 #
 
 from f5_cccl.resource import Resource
-from f5_cccl.resource.ltm.l7policy.action import Action
-from f5_cccl.resource.ltm.l7policy.condition import Condition
+from f5_cccl.resource.ltm.policy.action import Action
+from f5_cccl.resource.ltm.policy.condition import Condition
 
 
 class Rule(Resource):
@@ -27,25 +27,18 @@ class Rule(Resource):
     # properties that we wish to compare.
     properties = dict(
         name=None,
-        ordinal=None,
+        ordinal=0,
         actions=None,
         conditions=None
     )
 
-    def __init__(self, partition, data):
-        super(Rule, self).__init__(data['name'], partition)
-        for key in self.properties:
-            if key == 'actions':
-                self._data[key] = self._create_actions(
-                    partition, data[key])
-                continue
-            if key == 'conditions':
-                self._data[key] = self._create_conditions(
-                    partition, data[key])
-                continue
-            if key == 'name':
-                continue
-            self._data[key] = data.get(key)
+    def __init__(self, name, partition, **data):
+        super(Rule, self).__init__(name, partition)
+        self._data['ordinal'] = data.get('ordinal', 0)
+        self._data['actions'] = self._create_actions(
+            partition, data.get('actions', list()))
+        self._data['conditions'] = self._create_conditions(
+            partition, data.get('conditions', list()))
 
     def __eq__(self, other):
         """Check the equality of the two objects.
@@ -59,7 +52,6 @@ class Rule(Resource):
         for key in self.properties:
             if key == 'actions' or key == 'conditions':
                 if len(self._data[key]) != len(other.data[key]):
-                    # logger.debug('%s length is unequal', key)
                     return False
                 for index, obj in enumerate(self._data[key]):
                     if obj != other.data[key][index]:
@@ -75,17 +67,23 @@ class Rule(Resource):
     def __str__(self):
         return str(self._data)
 
+    def __lt__(self, other):
+        return self._data['ordinal'] < other.data['ordinal']
+
     def _create_actions(self, partition, actions):
         new_actions = []
-        for action in actions:
-            new_actions.append(Action(partition, action))
-        return new_actions
+
+        for index, action in enumerate(actions):
+            new_actions.append(Action(index, partition, action))
+        
+        return [action.data for action in sorted(new_actions)]
 
     def _create_conditions(self, partition, conditions):
-        new_conditions = []
-        for condition in conditions:
-            new_conditions.append(Condition(partition, condition))
-        return new_conditions
+        new_conditions = [Condition(partition, condition)
+                          for condition in conditions]
+
+        return [condition.data for condition in sorted(new_conditions)]
+
 
     def _uri_path(self, bigip):
         raise NotImplementedError

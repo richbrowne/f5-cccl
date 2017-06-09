@@ -96,39 +96,20 @@
     l7RuleActionType: 
       type: "object"
       properties: 
-        action: 
-          default: "forward-pool"
-          description: |
-            "Either a forwarding, redirect, or reject action to take. 
-            Supported actions are:
-              forward-pool: Forward to the named pool.  The
-              pool must exist in the managed partition or the
-              Common partition.
-
-              forward-vs: Forward to the named virtual server.
-              The virtual server must exist in the managed partition 
-              or the Common partition.
-
-              redirect-uri: Redirect to the URI string
-
-              reject: Block the traffic"
-          enum: 
-            - "forward-vs"
-            - "forward-pool"
-            - "redirect-uri"
-            - "reject"
+        forward:
+          type: "boolean"
+          default: True
+        request:
+          type: "boolean"
+          default: True
+        reset:
+          type: "boolean"
+          default: False
+        pool:
           type: "string"
-
-        target: 
-          description: |
-            "Where to forward the request.  This must be defined for 
-            all forwarding rules."
-          type: "string"
-          minLength: 1
-          maxLength: 256
-
       required: 
-        - "action"
+        - "forward"
+        - "request"        
 
     l7RuleMatchType: 
       type: "object"
@@ -194,14 +175,14 @@
             - "/Common/all-match"
           default: "/Common/first-match"
         rules: 
-          type: "array"
-          description: |
-            "List of rules associated with this policy.  This can be an empty list"
           items:
+            type: "array"
+            description: |
+              "List of rules associated with this policy.  This can be an empty list"
             $ref: "#definitions/l7RuleType"
       required: 
         - "name"
-        - "rules"
+        - "rulesReference"
 
     healthMonitorType: 
       type: "object"

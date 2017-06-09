@@ -35,8 +35,8 @@ class Condition(Resource):
         values=None
     )
 
-    def __init__(self, partition, data):
-        super(Condition, self).__init__(data['name'], partition)
+    def __init__(self, name, partition, **data):
+        super(Condition, self).__init__(name, partition)
         for key in self.properties:
             self._data[key] = data.get(key)
 

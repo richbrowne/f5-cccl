@@ -16,11 +16,10 @@
 # limitations under the License.
 #
 
-import f5
 from f5_cccl.resource import Resource
-from f5_cccl.resource.ltm.l7policy.action import Action
-from f5_cccl.resource.ltm.l7policy.condition import Condition
-from f5_cccl.resource.ltm.l7policy.rule import Rule
+from f5_cccl.resource.ltm.policy.action import Action
+from f5_cccl.resource.ltm.policy.condition import Condition
+from f5_cccl.resource.ltm.policy.rule import Rule
 
 
 class Policy(Resource):
@@ -36,18 +35,16 @@ class Policy(Resource):
 
     def __init__(self, name, partition, **data):
         """Create the policy and nested class objects"""
-        if isinstance(data, f5.bigip.tm.ltm.policy.Policy):
-            data = self._flatten_policy(data)
         super(Policy, self).__init__(name, partition)
-        for key, value in self.properties.items():
-            if key == 'rules':
-                rules = data.get('rules', value)
-                self._data[key] = self._create_rules(
-                    partition, rules)
-                continue
-            if key == 'name' or key == 'partition':
-                continue
-            self._data[key] = data.get(key, value)
+
+        rules = data.get('rules', list())
+        self._data['rules'] = self._create_rules(
+            partition, rules)
+
+        self._data['strategy'] = data.get(
+            'strategy',
+            self.properties.get('strategy')
+        )
 
         self._data['legacy'] = True
         self._data['controls'] = ["forwarding"]
@@ -79,24 +76,34 @@ class Policy(Resource):
 
     def _create_rules(self, partition, rules):
         new_rules = []
-        for rule in rules:
-            new_rules.append(Rule(partition, rule))
-        new_rules.sort(key=lambda x: x.data['ordinal'])
+        for index, rule in enumerate(rules):
+            rule['ordinal'] = index
+            new_rules.append(Rule(partition=partition, **rule).data)
+
         return new_rules
 
     def _uri_path(self, bigip):
         return bigip.tm.ltm.policys.policy
 
-    def _flatten_policy(self, bigip_policy):
+
+class IcrPolicy(Policy):
+
+    def __init__(self, name, partition, **data):
+        policy_data = self._flatten_policy(data)
+        super(IcrPolicy, self).__init__(name, partition, **policy_data)
+
+    def _flatten_policy(self, data):
         policy = {}
         for key in Policy.properties:
             if key == 'rules':
                 policy['rules'] = self._flatten_rules(
-                    bigip_policy.__dict__['rulesReference']['items'])
+                    data['rulesReference']['items'])
             elif key == 'legacy':
                 policy['legacy'] = True
+            elif key == 'name' or key == 'partition':
+                pass
             else:
-                policy[key] = bigip_policy.__dict__.get(key)
+                policy[key] = data.get(key)
         return policy
 
     def _flatten_rules(self, rules_list):
@@ -115,7 +122,9 @@ class Policy(Resource):
 
     def _flatten_actions(self, rule):
         actions = []
-        for action in rule['actionsReference']['items']:
+        actions_reference = rule.get('actionsReference',
+                                     dict())        
+        for action in actions_reference.get('items', list()):
             flat_action = {}
             for key in Action.properties:
                 flat_action[key] = action.get(key)
@@ -124,7 +133,9 @@ class Policy(Resource):
 
     def _flatten_condition(self, rule):
         conditions = []
-        for condition in rule['conditionsReference']['items']:
+        conditions_reference = rule.get('conditionsReference',
+                                        dict())
+        for condition in conditions_reference.get('items', list()):
             flat_condition = {}
             for key in Condition.properties:
                 flat_condition[key] = condition.get(key)
