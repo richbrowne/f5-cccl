@@ -74,7 +74,8 @@ class Rule(Resource):
         new_actions = []
 
         for index, action in enumerate(actions):
-            new_actions.append(Action(index, partition, action))
+            name = "{}".format(index)
+            new_actions.append(Action(name, partition, action))
         
         return [action.data for action in sorted(new_actions)]
 

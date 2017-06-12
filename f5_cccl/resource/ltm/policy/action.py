@@ -26,14 +26,22 @@ class Action(Resource):
     properties = dict(
         name=None,
         pool=None,
-        forward=None,
-        request=None
+        forward=True,
+        request=True,
+        reset=False
     )
 
     def __init__(self, name, partition, data):
         super(Action, self).__init__(name, None)
-        for key in self.properties:
-            self._data[key] = data.get(key)
+        for key, val in self.properties.items():
+            if key in ['name', 'partition']:
+                continue
+            self._data[key] = data.get(key, val)
+
+        if self._data['reset']:
+            self._data.pop('pool')
+        else:
+            self._data.pop('reset')
 
     def __eq__(self, other):
         """Check the equality of the two objects.

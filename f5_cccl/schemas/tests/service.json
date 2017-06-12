@@ -104,10 +104,9 @@
 		"name": "rule1",
 		"actions": [
 		  {
-			"action": "reject"
+			"reset": true
 		  }
-		],
-		"order": 0
+		]
 	  },
 	  {
 		"conditions": [
@@ -126,8 +125,7 @@
 			"action": "forward-pool",
 			"target": "/Project/pool2"
 		  }
-		],
-		"order": 1
+		]
 	  },
 	  {
 		"conditions": [
@@ -147,8 +145,7 @@
 			"action": "redirect-uri",
 			"target": "www.othersite.com"
 		  }
-		],
-		"order": 2
+		]
 	  }
 	]}
   }]
