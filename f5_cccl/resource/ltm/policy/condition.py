@@ -26,20 +26,62 @@ class Condition(Resource):
     properties = dict(
         name=None,
         index=None,
-        request=None,
+        request=True,
+
         equals=None,
+        endsWith=None,        
+        startsWith=None,
+        contains=None,
+
+        negate=False,
+        missing=False,
+
         httpHost=False,
         host=False,
+        
         httpUri=False,
         pathSegment=False,
+        path=False
+        extension=False        
+
+        httpHeader=False,
+        httpCookie=False,
+
+        tmName=None
         values=None
     )
 
-    def __init__(self, name, partition, **data):
-        super(Condition, self).__init__(name, partition)
-        for key in self.properties:
-            self._data[key] = data.get(key)
+    def __init__(self, name, match_type, data):
+        super(Condition, self).__init__(name, partition=None)
 
+        self._data['request'] = True
+
+        self.match_type = 
+        value = data.get('values', list())
+        tm_name = data.get('tmName', None)
+
+        if data.get('httpHost', False):
+            condition_map = {'httpHost': True, 'host': True, 'values': value}
+        elif data.get('httpUri', False):
+            condition_map = {'httpUri': True, 'path': True, 'values': value}
+            if data.get('path', False):
+                condition_map['path'] = True
+            elif data.get('pathSegment', False):
+                condition_map['pathSegment'] = True
+            elif data.get('extension', False):
+                condition_map['extension'] = True
+            else:
+                print("must specify one of path, pathSegment, or extension "
+                      "for HTTP URI matching condition")
+        elif data.get('httpHeader', False):
+            condition_map = {'httpHeader': True, 'tmName': tm_name, 'values': value}
+        elif data.get('httpCookie', False):
+            condition_map = {'httpCookie': True, 'tmName': tm_name, 'values': value}            
+        else:
+            print("Invalid match type must be one of: httpHost, httpUri, "
+                  "httpHeader, or httpCookie")
+
+        condition_map 
     def __eq__(self, other):
         """Check the equality of the two objects.
 
@@ -55,4 +97,8 @@ class Condition(Resource):
         return str(self._data)
 
     def _uri_path(self, bigip):
+        """Return the URI path of an rule object.
+
+        Not implemented because the current implementation does
+        not manage Rules individually."""
         raise NotImplementedError

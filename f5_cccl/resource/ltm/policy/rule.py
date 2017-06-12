@@ -75,13 +75,16 @@ class Rule(Resource):
 
         for index, action in enumerate(actions):
             name = "{}".format(index)
-            new_actions.append(Action(name, partition, action))
+            new_actions.append(Action(name, action))
         
         return [action.data for action in sorted(new_actions)]
 
     def _create_conditions(self, partition, conditions):
-        new_conditions = [Condition(partition, condition)
-                          for condition in conditions]
+        new_conditions = []
+        
+        for index, condition in enumerate(conditions):
+            name = "{}".format(index)
+            new_conditions.append(Condition(name, condition))
 
         return [condition.data for condition in sorted(new_conditions)]
 

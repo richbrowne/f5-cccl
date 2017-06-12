@@ -24,24 +24,43 @@ class Action(Resource):
     # The property names class attribute defines the names of the
     # properties that we wish to compare.
     properties = dict(
-        name=None,
-        pool=None,
-        forward=True,
         request=True,
-        reset=False
+        pool=None,
+        location=None,
+        forward=False,
+        reset=False,
+        redirect=False
     )
 
-    def __init__(self, name, partition, data):
-        super(Action, self).__init__(name, None)
-        for key, val in self.properties.items():
-            if key in ['name', 'partition']:
-                continue
-            self._data[key] = data.get(key, val)
+    def __init__(self, name, data):
+        super(Action, self).__init__(name, partition=None)
 
-        if self._data['reset']:
-            self._data.pop('pool')
+        # Actions are Only supported on requests.
+        self._data['request'] = True
+
+        # Is this a forwarding action?
+        if data.get('forward', False):
+
+            self._data['forward'] = True
+
+            # Yes, there are two supported forwarding actions:
+            # forward to pool and reset, these are mutually
+            # exclusive options.
+            pool = data.get('pool', None)
+            reset = data.get('reset', False)
+            if pool:
+                self._data['pool'] = pool
+            elif reset:
+                self._data['reset'] = reset
+
+        # Is this a redirect action?
+        elif data.get('redirect', False):
+            # Yes, set the location and httpReply attribute
+            self._data['location'] = data.get('location', None)
+            self._data['httpReply'] = data.get('httpReply', True)            
         else:
-            self._data.pop('reset')
+            # Only forward and redirect are supported.
+            print("Unsupported action, must be one of forward or redirect")
 
     def __eq__(self, other):
         """Check the equality of the two objects.
@@ -58,4 +77,8 @@ class Action(Resource):
         return str(self._data)
 
     def _uri_path(self, bigip):
+        """Return the URI path of an action object.
+
+        Not implemented because the current implementation does
+        not manage Actions individually."""
         raise NotImplementedError
