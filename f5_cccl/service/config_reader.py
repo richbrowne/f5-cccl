@@ -22,6 +22,7 @@ from f5_cccl.resource.ltm.monitor.http_monitor import ApiHTTPMonitor
 from f5_cccl.resource.ltm.monitor.https_monitor import ApiHTTPSMonitor
 from f5_cccl.resource.ltm.monitor.icmp_monitor import ApiICMPMonitor
 from f5_cccl.resource.ltm.monitor.tcp_monitor import ApiTCPMonitor
+from f5_cccl.resource.ltm.node import Node
 from f5_cccl.resource.ltm.policy import ApiPolicy
 from f5_cccl.resource.ltm.pool import ApiPool
 from f5_cccl.resource.ltm.virtual import ApiVirtualServer
@@ -91,4 +92,24 @@ class ServiceConfigReader(object):
             for i in iapps
         }
 
+        config_dict['nodes'] = self._desired_nodes(config_dict['pools'],
+                                                   config_dict['iapps'])
+
         return config_dict
+
+    def _desired_nodes(self, pools, iapps):
+        """Desired nodes is inferred from the active pool members."""
+        desired_nodes = dict()
+
+        for pool in pools:
+            for member in pools[pool].members:
+                addr = member.name.split('%3A')[0]
+                node = {'name': addr,
+                        'partition': member.partition,
+                        'address': addr,
+                        'state': 'user-up',
+                        'session': 'user-enabled'}
+                desired_nodes[addr] = Node(**node)
+
+        return desired_nodes
+
