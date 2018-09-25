@@ -1,0 +1,572 @@
+{
+  "definitions": {
+    "iAppType": {
+      "required": [
+        "partition", 
+        "template", 
+        "variables"
+      ], 
+      "type": "object", 
+      "properties": {
+        "tables": {
+          "type": "array", 
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/definitions/iappTableType"
+            }
+          }
+        }, 
+        "variables": {
+          "items": {
+            "properties": {
+              "name": {
+                "minLength": 1, 
+                "type": "string"
+              }, 
+              "value": {
+                "type": "string"
+              }
+            }
+          }, 
+          "type": "array"
+        }, 
+        "partition": {
+          "minLength": 1, 
+          "type": "string"
+        }, 
+        "options": {
+          "type": "object", 
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "minLength": 1, 
+              "type": "string"
+            }
+          }
+        }, 
+        "template": {
+          "minLength": 1, 
+          "type": "string"
+        }
+      }
+    }, 
+    "l7PolicyType": {
+      "required": [
+        "name", 
+        "rules"
+      ], 
+      "type": "object", 
+      "id": "#/definitions/l7PolicyType", 
+      "properties": {
+        "rules": {
+          "items": {
+            "$ref": "#definitions/l7RuleType"
+          }, 
+          "type": "array", 
+          "description": "\"List of rules associated with this policy.  This can be an empty list\"\n"
+        }, 
+        "description": {
+          "type": "string"
+        }, 
+        "name": {
+          "type": "string", 
+          "description": "Name of the policy object"
+        }, 
+        "strategy": {
+          "default": "first", 
+          "enum": [
+            "first", 
+            "best", 
+            "all"
+          ], 
+          "type": "string", 
+          "description": "\"Specifies the method to determine which actions get executed in the\ncase where there are multiple rules that match. The default is first.\"\n"
+        }
+      }
+    }, 
+    "l7RuleType": {
+      "required": [
+        "name"
+      ], 
+      "type": "object", 
+      "description": "Defines an L7 rule.", 
+      "properties": {
+        "conditions": {
+          "items": {
+            "type": "array", 
+            "$ref": "#definitions/l7RuleMatchType"
+          }
+        }, 
+        "name": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "The name of the rule", 
+          "maxLength": 256
+        }, 
+        "actions": {
+          "items": {
+            "type": "array", 
+            "$ref": "#definitions/l7RuleActionType"
+          }
+        }
+      }
+    }, 
+    "iappTableType": {
+      "required": [
+        "columns", 
+        "rows"
+      ], 
+      "type": "object", 
+      "properties": {
+        "columnNames": {
+          "minItems": 1, 
+          "items": {
+            "minLength": 1, 
+            "type": "string"
+          }, 
+          "type": "array"
+        }, 
+        "rows": {
+          "items": {
+            "items": {
+              "type": "string"
+            }, 
+            "type": "array"
+          }, 
+          "type": "array"
+        }, 
+        "name": {
+          "type": "string"
+        }
+      }
+    }, 
+    "poolMemberType": {
+      "required": [
+        "address", 
+        "port"
+      ], 
+      "type": "object", 
+      "id": "#/definitions/poolMemberType", 
+      "properties": {
+        "ratio": {
+          "default": 1, 
+          "definition": "Specifies the ratio weight to assign to the pool member. The default is 1, which means that each pool member has an equal ratio proportion.", 
+          "minimum": 1, 
+          "type": "integer", 
+          "maximum": 65535
+        }, 
+        "name": {
+          "definition": "\"Specifies the name of the pool member.  This has the form: <address>:<port>\"\n", 
+          "type": "string"
+        }, 
+        "rateLimit": {
+          "default": 0, 
+          "definition": "\"Specifies the maximum number of connections per second allowed for a pool member.\"\n", 
+          "type": "integer"
+        }, 
+        "session": {
+          "default": "user-enabled", 
+          "definition": "Marks the pool member up or down. The default value is user-up.", 
+          "enum": [
+            "user-enabled", 
+            "user-disabled"
+          ], 
+          "type": "string"
+        }, 
+        "priorityGroup": {
+          "default": 0, 
+          "definition": "\"Specifies a number representing the priority group for the pool member.\nThe default is 0, meaning that the member has no priority.\"\n", 
+          "type": "integer"
+        }, 
+        "connectionLimit": {
+          "default": 0, 
+          "definition": "\"Specifies a maximum established connection limit for a pool member or node. When \nthe current connections count reaches this number, the system does not send additional \nconnections to that pool member or node. The default is 0, meaning that there is no\nlimit to the number of connections.\"\n", 
+          "type": "integer"
+        }, 
+        "address": {
+          "definition": "Specifies the IP address for the pool member.", 
+          "type": "string"
+        }, 
+        "routeDomain": {
+          "definition": "Specifies the member IP address namespace.", 
+          "$ref": "#/definitions/routeDomainType"
+        }, 
+        "port": {
+          "definition": "Specifies the service port for the pool member.", 
+          "$ref": "#/definitions/portType"
+        }, 
+        "description": {
+          "definition": "User defined description", 
+          "type": "string", 
+          "maximum": 256
+        }
+      }
+    }, 
+    "l7RuleMatchType": {
+      "required": [
+        "operand", 
+        "condition", 
+        "value"
+      ], 
+      "type": "object", 
+      "properties": {
+        "negate": {
+          "default": false, 
+          "type": "boolean", 
+          "description": "Negate the sense of the match."
+        }, 
+        "missing": {
+          "default": false, 
+          "type": "boolean", 
+          "description": "Skip this condition if it is missing from the request."
+        }, 
+        "httpHeaderName": {
+          "type": "string", 
+          "description": "Name of the HTTP header that contains the value to compare."
+        }, 
+        "cookieName": {
+          "type": "string", 
+          "description": "Name of the HTTP cookie that contains the value to compare."
+        }, 
+        "value": {
+          "type": "string", 
+          "description": "Value against which the operand is compared."
+        }, 
+        "caseSensitive": {
+          "default": false, 
+          "type": "boolean", 
+          "description": "The match string is case-sensive"
+        }, 
+        "operand": {
+          "enum": [
+            "http-uri-host", 
+            "http-uri-path", 
+            "http-uri-ext", 
+            "http-header", 
+            "http-cookie"
+          ], 
+          "type": "string", 
+          "description": "Request object to evaluate."
+        }, 
+        "condition": {
+          "enum": [
+            "equals", 
+            "begins-with", 
+            "ends-with", 
+            "contains"
+          ], 
+          "type": "string", 
+          "description": "."
+        }
+      }
+    }, 
+    "virtualServerType": {
+      "required": [
+        "destination", 
+        "name"
+      ], 
+      "id": "#/definitions/virtualServerType", 
+      "properties": {
+        "destination": {
+          "type": "string", 
+          "description": "\"Specifies destination IP address information to which \nthe virtual server sends traffic.  This can be an IP address \nor a previously created virtual-address.  This is of the\nform /<partition><ip_address>%<route_domain>:<service_port>\"\n"
+        }, 
+        "name": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "Specifies the virtual server name", 
+          "maxLength": 256
+        }, 
+        "profilesReference": {
+          "items": {
+            "type": "array", 
+            "$ref": "#/definititions/profileType"
+          }, 
+          "description": "\"References the set of profiles that are associated with virtual server\"\n"
+        }, 
+        "vlansDisabled": {
+          "type": "boolean", 
+          "description": "\"Disables the virtual server on the list of VLANS and\ntunnels listed in the set of vlans.  The default is the virtual server is\nenabled on all VLANS and tunnel, which corresponds to the setting vlansDisabled=True\nwith an emptly vlans list.\"\n"
+        }, 
+        "enabled": {
+          "type": "boolean", 
+          "description": "\"Enables the virtual server, enabled=True. Note that enabled=False is\ninvalid, you must specify disabled=True\"\n"
+        }, 
+        "sourceAddressTranslation": {
+          "type": "string", 
+          "description": "\"Specifies the type of address translation pool, used for implementing\nselective and intelligent source address translation. The default is automap.\nSupported values are:\n  automap\n  snatpool\n  None\nIf snatpool is set, then the snatpool configuration item must be defined.\"\n", 
+          "$ref": "#/definitions/snatConfigType"
+        }, 
+        "disabled": {
+          "type": "boolean", 
+          "description": "\"Disable the virtual server, disabled=True. Note that disabled=False is\ninvalid, you must specify enabled=True.  This option is mutually\nexclusive from enabled.\"\n"
+        }, 
+        "vlansEnabled": {
+          "type": "boolean", 
+          "description": "\"Enables the virtual server on the list of VLANS and\ntunnels listed in the list of vlans.  The default is the virtual server is\nenabled on all VLANS and tunnel, which corresponds to the setting vlansDisabled=True\nwith an emptly vlans list.\"\n"
+        }, 
+        "connectionLimit": {
+          "default": 0, 
+          "type": "integer", 
+          "description": "\"Specifies the maximum number of concurrent connections allowed for\nthe virtual server. Setting this to 0 turns off connection limits.\nThe default is 0.\"\n"
+        }, 
+        "ipProtocol": {
+          "default": "tcp", 
+          "enum": [
+            "tcp", 
+            "udp", 
+            "any"
+          ], 
+          "type": "string", 
+          "description": "Specifies the network protocol name you want the system to use."
+        }, 
+        "vlans": {
+          "items": {
+            "minLength": 1, 
+            "type": "string", 
+            "description": "VLANs and tunnels that you have specifically enabled.", 
+            "maxLength": 256
+          }, 
+          "type": "array", 
+          "description": "\"The virtual server is enabled/disabled on this set of VLANs.\nSee vlans-disabled and vlans-enabled.\"\n"
+        }, 
+        "pool": {
+          "type": "string", 
+          "description": "\"Specifies the name of a default pool to which you want the virtual\nserver to automatically direct traffic.\"\n"
+        }, 
+        "description": {
+          "minLength": 0, 
+          "type": "string", 
+          "description": "\"Specifies descriptive text that identifies the virtual server.\"\n", 
+          "maxLength": 256
+        }
+      }
+    }, 
+    "poolType": {
+      "required": [
+        "name"
+      ], 
+      "type": "object", 
+      "id": "#/definitions/poolType", 
+      "properties": {
+        "members": {
+          "items": {
+            "type": "array", 
+            "$ref": "#definitions/poolMemberType"
+          }
+        }, 
+        "description": {
+          "minLength": 0, 
+          "type": "string", 
+          "description": "Specifies descriptive text that identifies the virtual server.", 
+          "maxLength": 256
+        }, 
+        "monitors": {
+          "items": {
+            "required": [
+              "refname"
+            ], 
+            "properties": {
+              "refname": {
+                "default": 0, 
+                "definitition": "List of monitor path names for this pool", 
+                "type": "string"
+              }
+            }
+          }, 
+          "type": "array"
+        }, 
+        "name": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "Name of the pool object.", 
+          "maxLength": 256
+        }, 
+        "loadBalancingMode": {
+          "default": "round-robin", 
+          "enum": [
+            "round-robin", 
+            "least-connections-member", 
+            "weighted-least-connections-member", 
+            "ratio-member"
+          ], 
+          "type": "string", 
+          "description": "Loadbalancing algorithm to use on pool."
+        }
+      }
+    }, 
+    "profileType": {
+      "required": [
+        "name", 
+        "partition"
+      ], 
+      "type": "object", 
+      "description": "Defines an LTM profile", 
+      "properties": {
+        "partition": {
+          "type": "string"
+        }, 
+        "name": {
+          "type": "string"
+        }, 
+        "context": {
+          "enum": [
+            "serverside", 
+            "clientside", 
+            "all"
+          ], 
+          "type": "string"
+        }
+      }
+    }, 
+    "portType": {
+      "definition": "Defines the network port for the virtual-server or member", 
+      "minimum": 0, 
+      "type": "integer", 
+      "maximum": 65535
+    }, 
+    "routeDomainType": {
+      "required": [
+        "id"
+      ], 
+      "type": "object", 
+      "description": "Defines the route domain name and id pair", 
+      "properties": {
+        "id": {
+          "type": "integer"
+        }, 
+        "name": {
+          "default": "", 
+          "type": "string"
+        }
+      }
+    }, 
+    "snatConfigType": {
+      "required": [
+        "type"
+      ], 
+      "type": "object", 
+      "description": "For describing a SNAT configuration", 
+      "properties": {
+        "type": {
+          "enum": [
+            "snat", 
+            "automap"
+          ], 
+          "type": "string"
+        }, 
+        "pool": {
+          "desctiption": "\"Full path to snat pool, (e.g. /Common/my_snatpool)\"\n", 
+          "type": "string"
+        }
+      }
+    }, 
+    "healthMonitorType": {
+      "required": [
+        "name", 
+        "type"
+      ], 
+      "type": "object", 
+      "properties": {
+        "name": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "Specifies the name of the monitor."
+        }, 
+        "timeout": {
+          "default": 16, 
+          "definition": "\"Specifies the number of seconds to wait after a resource first responds\ncorrectly to the monitor before setting the resource to up.\"\n", 
+          "minimum": 1, 
+          "type": "integer", 
+          "maximum": 86400
+        }, 
+        "recv": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "\"Specifies the regular expression representing the text string that the \nmonitor looks for in the returned resource. The most common receive \nexpressions contain a text string that is included in an HTML file on\nyour site. The text string can be regular text, HTML tags, or image names.\"\n"
+        }, 
+        "interval": {
+          "default": 5, 
+          "definition": "\"Specifies, in seconds, the frequency at which the system issues the monitor\ncheck when either the resource is down or the status of the resource is\nunknown. The default is 5.\"\n", 
+          "minimum": 1, 
+          "type": "integer", 
+          "maximum": 86400
+        }, 
+        "type": {
+          "enum": [
+            "http", 
+            "tcp", 
+            "https", 
+            "icmp"
+          ], 
+          "type": "string", 
+          "description": "Specifies the type of the monitor."
+        }, 
+        "send": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "\"Specifies the text string that the monitor sends to the target object.\nYou must include \\r\\n at the end of a non-empty Send String.\"\n"
+        }
+      }
+    }, 
+    "l7RuleActionType": {
+      "required": [
+        "action"
+      ], 
+      "type": "object", 
+      "properties": {
+        "action": {
+          "default": "forward-pool", 
+          "enum": [
+            "forward-vs", 
+            "forward-pool", 
+            "redirect-uri", 
+            "reject"
+          ], 
+          "type": "string", 
+          "description": "\"Either a forwarding, redirect, or reject action to take. \nSupported actions are:\n  forward-pool: Forward to the named pool.  The\n  pool must exist in the managed partition or the\n  Common partition.\n\n  forward-vs: Forward to the named virtual server.\n  The virtual server must exist in the managed partition \n  or the Common partition.\n\n  redirect-uri: Redirect to the URI string\n\n  reject: Block the traffic\"\n"
+        }, 
+        "target": {
+          "minLength": 1, 
+          "type": "string", 
+          "description": "\"Where to forward the request.  This must be defined for \nall forwarding rules.\"\n", 
+          "maxLength": 256
+        }
+      }
+    }
+  }, 
+  "$schema": "http://json-schema.org/draft-04/schema#", 
+  "type": "object", 
+  "id": "http://github.com/f5devcentral/f5-cccl/schemas/cccl-api-schema.json", 
+  "properties": {
+    "pools": {
+      "items": {
+        "$ref": "#/definitions/poolType"
+      }, 
+      "type": "array"
+    }, 
+    "iapps": {
+      "items": {
+        "$ref": "#/definitions/iAppType"
+      }, 
+      "type": "array"
+    }, 
+    "l7Policies": {
+      "items": {
+        "$ref": "#/definitions/l7PolicyType"
+      }, 
+      "type": "array"
+    }, 
+    "virtualServers": {
+      "items": {
+        "$ref": "#/definitions/virtualServerType"
+      }, 
+      "type": "array"
+    }, 
+    "monitors": {
+      "items": {
+        "$ref": "#/definitions/healthMonitorType"
+      }, 
+      "type": "array"
+    }
+  }
+}
